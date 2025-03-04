@@ -131,30 +131,34 @@
         const totalDisks = 3;
 
         function initializeGame() {
-            const tower1 = document.getElementById('tower-1');
-            tower1.innerHTML = '';
-            
-            // Create disks with fixed sizes
-            [3, 2, 1].forEach(size => {
-                const disk = document.createElement('div');
-                disk.className = 'disk';
-                disk.dataset.size = size;
-                tower1.appendChild(disk);
-            });
+    const tower1 = document.getElementById('tower-1');
+    tower1.innerHTML = ''; // Clear tower before adding new disks
 
-            document.querySelectorAll('.tower').forEach(tower => {
-                if(tower !== tower1) tower.innerHTML = '';
-            });
-            
-            addEventListeners();
-        }
+    // Create disks with fixed sizes
+    [3, 2, 1].forEach(size => {
+        const disk = document.createElement('div');
+        disk.className = 'disk';
+        disk.dataset.size = size;
+        tower1.appendChild(disk);
+    });
 
-        function addEventListeners() {
-            document.querySelectorAll('.disk').forEach(disk => {
-                disk.addEventListener('touchstart', handleStart, { passive: false });
-                disk.addEventListener('mousedown', handleStart);
-            });
-        }
+    // Clear other towers
+    document.querySelectorAll('.tower').forEach(tower => {
+        if (tower !== tower1) tower.innerHTML = '';
+    });
+
+    // Re-add event listeners after creating disks
+    addEventListeners();
+}
+
+
+function addEventListeners() {
+    document.querySelectorAll('.disk').forEach(disk => {
+        disk.addEventListener('touchstart', handleStart, { passive: false });
+        disk.addEventListener('mousedown', handleStart);
+    });
+}
+
 
         function handleStart(e) {
     e.preventDefault();
