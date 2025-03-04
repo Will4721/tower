@@ -157,62 +157,64 @@
         }
 
         function handleStart(e) {
-            e.preventDefault();
-            selectedDisk = e.target;
-            selectedDisk.classList.add('grabbing');
-            
-            // Store initial touch coordinates
-            const initX = e.touches ? e.touches[0].clientX : e.clientX;
-            const initY = e.touches ? e.touches[0].clientY : e.clientY;
-            
-            // Create temporary overlay for smooth dragging
-            const ghostDisk = selectedDisk.cloneNode(true);
-            ghostDisk.style.position = 'fixed';
-            ghostDisk.style.left = `${initX - selectedDisk.offsetWidth/2}px`;
-            ghostDisk.style.top = `${initY - selectedDisk.offsetHeight/2}px`;
-            document.body.appendChild(ghostDisk);
+    e.preventDefault();
+    selectedDisk = e.target;
+    selectedDisk.classList.add('grabbing');
 
-            const moveHandler = (e) => {
-                const x = e.touches ? e.touches[0].clientX : e.clientX;
-                const y = e.touches ? e.touches[0].clientY : e.clientY;
-                ghostDisk.style.left = `${x - ghostDisk.offsetWidth/2}px`;
-                ghostDisk.style.top = `${y - ghostDisk.offsetHeight/2}px`;
-            };
+    // Store initial touch/mouse coordinates
+    const initX = e.touches ? e.touches[0].clientX : e.clientX;
+    const initY = e.touches ? e.touches[0].clientY : e.clientY;
 
-            const releaseHandler = (e) => {
-                document.removeEventListener('touchmove', moveHandler);
-                document.removeEventListener('mousemove', moveHandler);
-                document.removeEventListener('touchend', releaseHandler);
-                document.removeEventListener('mouseup', releaseHandler);
+    // Create a temporary overlay for smooth dragging
+    const ghostDisk = selectedDisk.cloneNode(true);
+    ghostDisk.style.position = 'fixed';
+    ghostDisk.style.left = `${initX - selectedDisk.offsetWidth / 2}px`;
+    ghostDisk.style.top = `${initY - selectedDisk.offsetHeight / 2}px`;
+    ghostDisk.style.pointerEvents = 'none'; // <-- Add this line to prevent interference
+    document.body.appendChild(ghostDisk);
 
-                // Find target tower using document.elementFromPoint()
-                const finalX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
-                const finalY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
-                const targetTower = document.elementFromPoint(finalX, finalY).closest('.tower');
+    const moveHandler = (e) => {
+        const x = e.touches ? e.touches[0].clientX : e.clientX;
+        const y = e.touches ? e.touches[0].clientY : e.clientY;
+        ghostDisk.style.left = `${x - ghostDisk.offsetWidth / 2}px`;
+        ghostDisk.style.top = `${y - ghostDisk.offsetHeight / 2}px`;
+    };
 
-                if(targetTower) {
-                    const topDisk = targetTower.lastElementChild;
-                    const isLegal = !topDisk || 
-                        parseInt(selectedDisk.dataset.size) < parseInt(topDisk.dataset.size);
-                    
-                    if(isLegal) {
-                        targetTower.appendChild(selectedDisk);
-                        moveCount++;
-                        document.getElementById('move-counter').textContent = `Moves: ${moveCount}`;
-                        checkWin();
-                    }
-                }
+    const releaseHandler = (e) => {
+        document.removeEventListener('touchmove', moveHandler);
+        document.removeEventListener('mousemove', moveHandler);
+        document.removeEventListener('touchend', releaseHandler);
+        document.removeEventListener('mouseup', releaseHandler);
 
-                selectedDisk.classList.remove('grabbing');
-                ghostDisk.remove();
-                selectedDisk = null;
-            };
+        // Find target tower using elementFromPoint()
+        const finalX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+        const finalY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+        const targetTower = document.elementFromPoint(finalX, finalY)?.closest('.tower');
 
-            document.addEventListener('touchmove', moveHandler, { passive: false });
-            document.addEventListener('mousemove', moveHandler);
-            document.addEventListener('touchend', releaseHandler);
-            document.addEventListener('mouseup', releaseHandler);
+        if (targetTower) {
+            const topDisk = targetTower.lastElementChild;
+            const isLegal = !topDisk || 
+                parseInt(selectedDisk.dataset.size) < parseInt(topDisk.dataset.size);
+
+            if (isLegal) {
+                targetTower.appendChild(selectedDisk);
+                moveCount++;
+                document.getElementById('move-counter').textContent = `Moves: ${moveCount}`;
+                checkWin();
+            }
         }
+
+        selectedDisk.classList.remove('grabbing');
+        ghostDisk.remove();
+        selectedDisk = null;
+    };
+
+    document.addEventListener('touchmove', moveHandler, { passive: false });
+    document.addEventListener('mousemove', moveHandler);
+    document.addEventListener('touchend', releaseHandler);
+    document.addEventListener('mouseup', releaseHandler);
+}
+
 
         function checkWin() {
             if(document.getElementById('tower-3').children.length === totalDisks) {
