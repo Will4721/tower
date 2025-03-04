@@ -27,13 +27,15 @@
         h1 {
             margin-bottom: 20px;
             color: #ecf0f1;
+            font-size: 2rem;
         }
 
         #game {
             display: flex;
-            justify-content: center;
-            gap: 100px;
-            padding: 40px 20px;
+            justify-content: space-around;
+            width: 100%;
+            max-width: 800px; /* Limit maximum width */
+            padding: 20px;
             height: 60vh;
         }
 
@@ -104,42 +106,50 @@
             color: #ecf0f1;
         }
 
-        .modal {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: #34495e;
-            padding: 30px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 0 20px rgba(0,0,0,0.3);
-            z-index: 1000;
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            #game {
+                gap: 20px; /* Reduce gap between towers */
+                padding: 10px;
+            }
+
+            .tower {
+                min-height: 150px; /* Shorter towers for smaller screens */
+            }
+
+            .tower::after {
+                width: 80px; /* Narrower base for smaller screens */
+            }
+
+            .disk {
+                height: 20px; /* Smaller disks for smaller screens */
+            }
         }
 
-        .modal h2 {
-            color: #2ecc71;
-            margin: 0 0 15px 0;
-        }
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.2rem;
+            }
 
-        .code-display {
-            font-size: 28px;
-            letter-spacing: 5px;
-            background: #2c3e50;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 15px 0;
-        }
+            #game {
+                gap: 10px; /* Even smaller gap for very small screens */
+            }
 
-        .overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
+            .tower {
+                min-height: 120px; /* Even shorter towers */
+            }
+
+            .tower::after {
+                width: 60px; /* Even narrower base */
+            }
+
+            .disk {
+                height: 15px; /* Even smaller disks */
+            }
         }
     </style>
 </head>
@@ -155,17 +165,9 @@
         <div id="move-counter">Moves: 0</div>
     </div>
 
-    <!-- Victory Modal -->
-    <div class="overlay" id="overlay"></div>
-    <div class="modal" id="victory-modal">
-        <h2>Mission Accomplished!</h2>
-        <div class="code-display" id="victory-code">0000</div>
-        <button onclick="closeModal()">Reset Game</button>
-    </div>
-
     <script>
         // CONFIGURABLE SETTINGS
-        const victoryCode = "0000"; // ← Change this to your desired code
+        const victoryCode = "7482"; // ← Change this to your desired code
 
         // Game State
         let selectedDisk = null;
@@ -231,17 +233,9 @@
         // Check if the player won
         function checkWin() {
             if (document.getElementById('tower-3').childElementCount === totalDisks) {
-                document.getElementById('victory-code').textContent = victoryCode;
-                document.getElementById('victory-modal').style.display = 'block';
-                document.getElementById('overlay').style.display = 'block';
+                alert(`Congratulations! You solved it in ${moveCount} moves!`);
+                resetGame();
             }
-        }
-
-        // Close the modal
-        function closeModal() {
-            document.getElementById('victory-modal').style.display = 'none';
-            document.getElementById('overlay').style.display = 'none';
-            resetGame();
         }
 
         // Reset the game
