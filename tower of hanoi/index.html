@@ -158,7 +158,12 @@
 
         function handleStart(e) {
     e.preventDefault();
-    selectedDisk = e.target;
+    const clickedDisk = e.target;
+
+    // Ensure only the topmost disc in each tower can be moved
+    if (clickedDisk !== clickedDisk.parentElement.lastElementChild) return;
+
+    selectedDisk = clickedDisk;
     selectedDisk.classList.add('grabbing');
 
     // Store initial touch/mouse coordinates
@@ -170,7 +175,7 @@
     ghostDisk.style.position = 'fixed';
     ghostDisk.style.left = `${initX - selectedDisk.offsetWidth / 2}px`;
     ghostDisk.style.top = `${initY - selectedDisk.offsetHeight / 2}px`;
-    ghostDisk.style.pointerEvents = 'none'; // <-- Add this line to prevent interference
+    ghostDisk.style.pointerEvents = 'none'; // Prevent interference with elementFromPoint()
     document.body.appendChild(ghostDisk);
 
     const moveHandler = (e) => {
@@ -214,6 +219,7 @@
     document.addEventListener('touchend', releaseHandler);
     document.addEventListener('mouseup', releaseHandler);
 }
+
 
 
         function checkWin() {
