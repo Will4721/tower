@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tower of Hanoi</title>
     <style>
+        /* Reset default styles */
         * {
             margin: 0;
             padding: 0;
@@ -16,6 +17,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             background: #2c3e50;
             color: white;
             min-height: 100vh;
@@ -23,85 +25,139 @@
         }
 
         h1 {
-            margin: 20px 0;
+            margin-bottom: 20px;
             color: #ecf0f1;
+            font-size: 2rem;
         }
 
         #game {
             display: flex;
-            justify-content: space-between;
-            width: 90%;
-            max-width: 600px;
-            height: 300px;
-            margin: 20px 0;
-            position: relative;
+            justify-content: space-around;
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+            height: 60vh;
         }
 
         .tower {
             width: 20px;
-            height: 200px;
-            background: #95a5a6;
-            border-radius: 10px;
-            position: relative;
+            min-height: 200px;
+            background: #bdc3c7;
+            border-radius: 10px 10px 0 0;
             display: flex;
             flex-direction: column-reverse;
             align-items: center;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
         .tower::after {
             content: "";
+            display: block;
+            width: 120px;
+            height: 20px;
+            background: #7f8c8d;
             position: absolute;
             bottom: -20px;
             left: 50%;
             transform: translateX(-50%);
-            width: 100px;
-            height: 20px;
-            background: #7f8c8d;
-            border-radius: 5px;
+            border-radius: 0 0 10px 10px;
         }
 
         .disk {
             height: 25px;
-            border-radius: 12px;
+            border-radius: 15px;
             margin: 3px 0;
             transition: all 0.3s ease;
-            position: relative;
-            z-index: 1;
             touch-action: none;
+            cursor: pointer;
+            position: static !important;
+            z-index: 1;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         }
 
+        .disk:nth-child(1) { background: #e74c3c; width: 120px; }
+        .disk:nth-child(2) { background: #3498db; width: 90px; }
+        .disk:nth-child(3) { background: #2ecc71; width: 60px; }
+
         #controls {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
+            margin-top: 30px;
+            text-align: center;
         }
 
         button {
-            padding: 10px 20px;
+            padding: 12px 25px;
+            font-size: 16px;
             background: #3498db;
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 25px;
             cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #2980b9;
         }
 
         #move-counter {
-            font-size: 1.2em;
+            margin-top: 15px;
+            font-size: 18px;
+            color: #ecf0f1;
         }
 
-        /* Disk colors */
-        .disk:nth-child(1) { background: #e74c3c; width: 100px; }
-        .disk:nth-child(2) { background: #3498db; width: 75px; }
-        .disk:nth-child(3) { background: #2ecc71; width: 50px; }
-
-        @media (max-width: 600px) {
-            #game {
-                gap: 30px;
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.5rem;
             }
+
+            #game {
+                gap: 20px;
+                padding: 10px;
+            }
+
+            .tower {
+                min-height: 150px;
+            }
+
             .tower::after {
                 width: 80px;
             }
+
+            .disk {
+                height: 20px;
+            }
+
+            .disk:nth-child(1) { width: 100px; }
+            .disk:nth-child(2) { width: 75px; }
+            .disk:nth-child(3) { width: 50px; }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.2rem;
+            }
+
+            #game {
+                gap: 10px;
+            }
+
+            .tower {
+                min-height: 120px;
+            }
+
+            .tower::after {
+                width: 60px;
+            }
+
+            .disk {
+                height: 15px;
+            }
+
+            .disk:nth-child(1) { width: 80px; }
+            .disk:nth-child(2) { width: 60px; }
+            .disk:nth-child(3) { width: 40px; }
         }
     </style>
 </head>
@@ -118,29 +174,31 @@
     </div>
 
     <script>
+        // CONFIGURABLE SETTINGS
+        const victoryCode = "7482"; // ← Change this to your desired code
+
+        // Game State
         let selectedDisk = null;
         let moveCount = 0;
         const totalDisks = 3;
 
+        // Initialize the game
         function initializeGame() {
             const tower1 = document.getElementById('tower-1');
             tower1.innerHTML = '';
-            
-            // Create disks
-            for(let i = totalDisks; i >= 1; i--) {
+            for (let i = totalDisks; i >= 1; i--) {
                 const disk = document.createElement('div');
                 disk.className = 'disk';
                 disk.dataset.size = i;
                 tower1.appendChild(disk);
             }
-
             document.querySelectorAll('.tower').forEach(tower => {
-                if(tower.id !== 'tower-1') tower.innerHTML = '';
+                if (tower !== tower1) tower.innerHTML = '';
             });
-
             addEventListeners();
         }
 
+        // Add event listeners
         function addEventListeners() {
             document.querySelectorAll('.disk').forEach(disk => {
                 disk.addEventListener('touchstart', handleStart);
@@ -151,21 +209,53 @@
                 tower.addEventListener('touchend', handleEnd);
                 tower.addEventListener('mouseup', handleEnd);
             });
+
+            // Prevent scrolling during touch events
+            document.body.addEventListener('touchmove', (e) => {
+                if (selectedDisk) e.preventDefault();
+            }, { passive: false });
         }
 
+        // Handle start of drag
         function handleStart(e) {
             e.preventDefault();
             selectedDisk = this;
             this.style.opacity = '0.7';
+            this.style.transition = 'none'; // Disable smooth transition during drag
+
+            // Move the disk to follow the finger/mouse
+            const moveHandler = (e) => {
+                const touch = e.touches ? e.touches[0] : e;
+                const offsetX = touch.clientX - selectedDisk.getBoundingClientRect().width / 2;
+                const offsetY = touch.clientY - selectedDisk.getBoundingClientRect().height / 2;
+                selectedDisk.style.position = 'fixed';
+                selectedDisk.style.left = `${offsetX}px`;
+                selectedDisk.style.top = `${offsetY}px`;
+            };
+
+            // Attach move handlers
+            document.addEventListener('touchmove', moveHandler);
+            document.addEventListener('mousemove', moveHandler);
+
+            // Clean up after release
+            const releaseHandler = () => {
+                document.removeEventListener('touchmove', moveHandler);
+                document.removeEventListener('mousemove', moveHandler);
+                document.removeEventListener('touchend', releaseHandler);
+                document.removeEventListener('mouseup', releaseHandler);
+            };
+
+            document.addEventListener('touchend', releaseHandler);
+            document.addEventListener('mouseup', releaseHandler);
         }
 
+        // Handle end of drag
         function handleEnd(e) {
             if (!selectedDisk) return;
 
             const targetTower = this;
             const topDisk = targetTower.lastElementChild;
-            const isLegal = !topDisk || 
-                parseInt(selectedDisk.dataset.size) < parseInt(topDisk.dataset.size);
+            const isLegal = !topDisk || parseInt(selectedDisk.dataset.size) < parseInt(topDisk.dataset.size);
 
             if (isLegal) {
                 targetTower.appendChild(selectedDisk);
@@ -174,24 +264,29 @@
                 checkWin();
             }
 
+            // Reset disk position and styles
+            selectedDisk.style.position = 'static';
             selectedDisk.style.opacity = '1';
+            selectedDisk.style.transition = 'all 0.3s ease';
             selectedDisk = null;
         }
 
+        // Check if the player won
         function checkWin() {
-            if(document.getElementById('tower-3').children.length === totalDisks) {
-                alert(`You won in ${moveCount} moves!`);
+            if (document.getElementById('tower-3').childElementCount === totalDisks) {
+                alert(`Congratulations! You solved it in ${moveCount} moves!`);
                 resetGame();
             }
         }
 
+        // Reset the game
         function resetGame() {
             moveCount = 0;
             document.getElementById('move-counter').textContent = 'Moves: 0';
             initializeGame();
         }
 
-        // Initialize on load
+        // Start the game
         initializeGame();
     </script>
 </body>
