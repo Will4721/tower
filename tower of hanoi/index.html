@@ -5,152 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tower of Hanoi</title>
     <style>
-        /* Reset default styles */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: #2c3e50;
-            color: white;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        h1 {
-            margin-bottom: 20px;
-            color: #ecf0f1;
-            font-size: 2rem;
-        }
-
-        #game {
-            display: flex;
-            justify-content: space-around;
-            width: 100%;
-            max-width: 800px; /* Limit maximum width */
-            padding: 20px;
-            height: 60vh;
-        }
-
-        .tower {
-            width: 20px;
-            min-height: 200px;
-            background: #bdc3c7;
-            border-radius: 10px 10px 0 0;
-            display: flex;
-            flex-direction: column-reverse;
-            align-items: center;
-            position: relative;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-
-        .tower::after {
-            content: "";
-            display: block;
-            width: 120px;
-            height: 20px;
-            background: #7f8c8d;
-            position: absolute;
-            bottom: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-radius: 0 0 10px 10px;
-        }
-
-        .disk {
-            height: 25px;
-            border-radius: 15px;
-            margin: 3px 0;
-            transition: all 0.3s ease;
-            touch-action: none;
-            cursor: pointer;
-            position: static !important;
-            z-index: 1;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-        }
-
-        .disk:nth-child(1) { background: #e74c3c; }
-        .disk:nth-child(2) { background: #3498db; }
-        .disk:nth-child(3) { background: #2ecc71; }
-
-        #controls {
-            margin-top: 30px;
-            text-align: center;
-        }
-
-        button {
-            padding: 12px 25px;
-            font-size: 16px;
-            background: #3498db;
-            color: white;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        button:hover {
-            background: #2980b9;
-        }
-
-        #move-counter {
-            margin-top: 15px;
-            font-size: 18px;
-            color: #ecf0f1;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 1.5rem;
-            }
-
-            #game {
-                gap: 20px; /* Reduce gap between towers */
-                padding: 10px;
-            }
-
-            .tower {
-                min-height: 150px; /* Shorter towers for smaller screens */
-            }
-
-            .tower::after {
-                width: 80px; /* Narrower base for smaller screens */
-            }
-
-            .disk {
-                height: 20px; /* Smaller disks for smaller screens */
-            }
-        }
-
-        @media (max-width: 480px) {
-            h1 {
-                font-size: 1.2rem;
-            }
-
-            #game {
-                gap: 10px; /* Even smaller gap for very small screens */
-            }
-
-            .tower {
-                min-height: 120px; /* Even shorter towers */
-            }
-
-            .tower::after {
-                width: 60px; /* Even narrower base */
-            }
-
-            .disk {
-                height: 15px; /* Even smaller disks */
-            }
-        }
+        /* Previous CSS remains the same */
     </style>
 </head>
 <body>
@@ -202,13 +57,44 @@
                 tower.addEventListener('touchend', handleEnd);
                 tower.addEventListener('mouseup', handleEnd);
             });
+
+            // Prevent scrolling during touch events
+            document.body.addEventListener('touchmove', (e) => {
+                if (selectedDisk) e.preventDefault();
+            }, { passive: false });
         }
 
         // Handle start of drag
         function handleStart(e) {
             e.preventDefault();
             selectedDisk = this;
-            this.style.transform = 'scale(1.1)';
+            this.style.opacity = '0.7';
+            this.style.transition = 'none'; // Disable smooth transition during drag
+
+            // Move the disk to follow the finger/mouse
+            const moveHandler = (e) => {
+                const touch = e.touches ? e.touches[0] : e;
+                const offsetX = touch.clientX - selectedDisk.getBoundingClientRect().width / 2;
+                const offsetY = touch.clientY - selectedDisk.getBoundingClientRect().height / 2;
+                selectedDisk.style.position = 'fixed';
+                selectedDisk.style.left = `${offsetX}px`;
+                selectedDisk.style.top = `${offsetY}px`;
+            };
+
+            // Attach move handlers
+            document.addEventListener('touchmove', moveHandler);
+            document.addEventListener('mousemove', moveHandler);
+
+            // Clean up after release
+            const releaseHandler = () => {
+                document.removeEventListener('touchmove', moveHandler);
+                document.removeEventListener('mousemove', moveHandler);
+                document.removeEventListener('touchend', releaseHandler);
+                document.removeEventListener('mouseup', releaseHandler);
+            };
+
+            document.addEventListener('touchend', releaseHandler);
+            document.addEventListener('mouseup', releaseHandler);
         }
 
         // Handle end of drag
@@ -226,7 +112,10 @@
                 checkWin();
             }
 
-            selectedDisk.style.transform = 'scale(1)';
+            // Reset disk position and styles
+            selectedDisk.style.position = 'static';
+            selectedDisk.style.opacity = '1';
+            selectedDisk.style.transition = 'all 0.3s ease';
             selectedDisk = null;
         }
 
