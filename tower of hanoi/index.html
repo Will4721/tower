@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tower of Hanoi</title>
     <style>
-        /* Reset default styles */
         * {
             margin: 0;
             padding: 0;
@@ -17,15 +16,15 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             background: #2c3e50;
             color: white;
             min-height: 100vh;
             padding: 20px;
+            touch-action: none;
         }
 
         h1 {
-            margin-bottom: 20px;
+            margin: 20px 0;
             color: #ecf0f1;
             font-size: 2rem;
         }
@@ -35,8 +34,8 @@
             justify-content: space-around;
             width: 100%;
             max-width: 800px;
-            padding: 20px;
             height: 60vh;
+            padding: 20px;
         }
 
         .tower {
@@ -53,7 +52,6 @@
 
         .tower::after {
             content: "";
-            display: block;
             width: 120px;
             height: 20px;
             background: #7f8c8d;
@@ -68,17 +66,15 @@
             height: 25px;
             border-radius: 15px;
             margin: 3px 0;
-            transition: all 0.3s ease;
+            transition: transform 0.3s;
             touch-action: none;
-            cursor: pointer;
-            position: static !important;
-            z-index: 1;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 2;
         }
 
-        .disk:nth-child(1) { background: #e74c3c; width: 120px; }
-        .disk:nth-child(2) { background: #3498db; width: 90px; }
-        .disk:nth-child(3) { background: #2ecc71; width: 60px; }
+        .disk[data-size="3"] { width: 120px; background: #e74c3c; }
+        .disk[data-size="2"] { width: 90px; background: #3498db; }
+        .disk[data-size="1"] { width: 60px; background: #2ecc71; }
 
         #controls {
             margin-top: 30px;
@@ -87,77 +83,33 @@
 
         button {
             padding: 12px 25px;
-            font-size: 16px;
             background: #3498db;
             color: white;
             border: none;
             border-radius: 25px;
             cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        button:hover {
-            background: #2980b9;
+            font-size: 16px;
         }
 
         #move-counter {
             margin-top: 15px;
             font-size: 18px;
-            color: #ecf0f1;
         }
 
-        /* Responsive Design */
+        /* Touch optimization */
+        .grabbing {
+            transform: scale(1.1);
+            opacity: 0.8;
+            transition: none !important;
+        }
+
         @media (max-width: 768px) {
-            h1 {
-                font-size: 1.5rem;
-            }
-
-            #game {
-                gap: 20px;
-                padding: 10px;
-            }
-
-            .tower {
-                min-height: 150px;
-            }
-
-            .tower::after {
-                width: 80px;
-            }
-
-            .disk {
-                height: 20px;
-            }
-
-            .disk:nth-child(1) { width: 100px; }
-            .disk:nth-child(2) { width: 75px; }
-            .disk:nth-child(3) { width: 50px; }
-        }
-
-        @media (max-width: 480px) {
-            h1 {
-                font-size: 1.2rem;
-            }
-
-            #game {
-                gap: 10px;
-            }
-
-            .tower {
-                min-height: 120px;
-            }
-
-            .tower::after {
-                width: 60px;
-            }
-
-            .disk {
-                height: 15px;
-            }
-
-            .disk:nth-child(1) { width: 80px; }
-            .disk:nth-child(2) { width: 60px; }
-            .disk:nth-child(3) { width: 40px; }
+            h1 { font-size: 1.5rem; }
+            .tower { min-height: 150px; }
+            .tower::after { width: 100px; }
+            .disk[data-size="3"] { width: 100px; }
+            .disk[data-size="2"] { width: 75px; }
+            .disk[data-size="1"] { width: 50px; }
         }
     </style>
 </head>
@@ -174,119 +126,108 @@
     </div>
 
     <script>
-        // CONFIGURABLE SETTINGS
-        const victoryCode = "7482"; // ← Change this to your desired code
-
-        // Game State
         let selectedDisk = null;
         let moveCount = 0;
         const totalDisks = 3;
 
-        // Initialize the game
         function initializeGame() {
             const tower1 = document.getElementById('tower-1');
             tower1.innerHTML = '';
-            for (let i = totalDisks; i >= 1; i--) {
+            
+            // Create disks with fixed sizes
+            [3, 2, 1].forEach(size => {
                 const disk = document.createElement('div');
                 disk.className = 'disk';
-                disk.dataset.size = i;
+                disk.dataset.size = size;
                 tower1.appendChild(disk);
-            }
-            document.querySelectorAll('.tower').forEach(tower => {
-                if (tower !== tower1) tower.innerHTML = '';
             });
+
+            document.querySelectorAll('.tower').forEach(tower => {
+                if(tower !== tower1) tower.innerHTML = '';
+            });
+            
             addEventListeners();
         }
 
-        // Add event listeners
         function addEventListeners() {
             document.querySelectorAll('.disk').forEach(disk => {
-                disk.addEventListener('touchstart', handleStart);
+                disk.addEventListener('touchstart', handleStart, { passive: false });
                 disk.addEventListener('mousedown', handleStart);
             });
-
-            document.querySelectorAll('.tower').forEach(tower => {
-                tower.addEventListener('touchend', handleEnd);
-                tower.addEventListener('mouseup', handleEnd);
-            });
-
-            // Prevent scrolling during touch events
-            document.body.addEventListener('touchmove', (e) => {
-                if (selectedDisk) e.preventDefault();
-            }, { passive: false });
         }
 
-        // Handle start of drag
         function handleStart(e) {
             e.preventDefault();
-            selectedDisk = this;
-            this.style.opacity = '0.7';
-            this.style.transition = 'none'; // Disable smooth transition during drag
+            selectedDisk = e.target;
+            selectedDisk.classList.add('grabbing');
+            
+            // Store initial touch coordinates
+            const initX = e.touches ? e.touches[0].clientX : e.clientX;
+            const initY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            // Create temporary overlay for smooth dragging
+            const ghostDisk = selectedDisk.cloneNode(true);
+            ghostDisk.style.position = 'fixed';
+            ghostDisk.style.left = `${initX - selectedDisk.offsetWidth/2}px`;
+            ghostDisk.style.top = `${initY - selectedDisk.offsetHeight/2}px`;
+            document.body.appendChild(ghostDisk);
 
-            // Move the disk to follow the finger/mouse
             const moveHandler = (e) => {
-                const touch = e.touches ? e.touches[0] : e;
-                const offsetX = touch.clientX - selectedDisk.getBoundingClientRect().width / 2;
-                const offsetY = touch.clientY - selectedDisk.getBoundingClientRect().height / 2;
-                selectedDisk.style.position = 'fixed';
-                selectedDisk.style.left = `${offsetX}px`;
-                selectedDisk.style.top = `${offsetY}px`;
+                const x = e.touches ? e.touches[0].clientX : e.clientX;
+                const y = e.touches ? e.touches[0].clientY : e.clientY;
+                ghostDisk.style.left = `${x - ghostDisk.offsetWidth/2}px`;
+                ghostDisk.style.top = `${y - ghostDisk.offsetHeight/2}px`;
             };
 
-            // Attach move handlers
-            document.addEventListener('touchmove', moveHandler);
-            document.addEventListener('mousemove', moveHandler);
-
-            // Clean up after release
-            const releaseHandler = () => {
+            const releaseHandler = (e) => {
                 document.removeEventListener('touchmove', moveHandler);
                 document.removeEventListener('mousemove', moveHandler);
                 document.removeEventListener('touchend', releaseHandler);
                 document.removeEventListener('mouseup', releaseHandler);
+
+                // Find target tower using document.elementFromPoint()
+                const finalX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+                const finalY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+                const targetTower = document.elementFromPoint(finalX, finalY).closest('.tower');
+
+                if(targetTower) {
+                    const topDisk = targetTower.lastElementChild;
+                    const isLegal = !topDisk || 
+                        parseInt(selectedDisk.dataset.size) < parseInt(topDisk.dataset.size);
+                    
+                    if(isLegal) {
+                        targetTower.appendChild(selectedDisk);
+                        moveCount++;
+                        document.getElementById('move-counter').textContent = `Moves: ${moveCount}`;
+                        checkWin();
+                    }
+                }
+
+                selectedDisk.classList.remove('grabbing');
+                ghostDisk.remove();
+                selectedDisk = null;
             };
 
+            document.addEventListener('touchmove', moveHandler, { passive: false });
+            document.addEventListener('mousemove', moveHandler);
             document.addEventListener('touchend', releaseHandler);
             document.addEventListener('mouseup', releaseHandler);
         }
 
-        // Handle end of drag
-        function handleEnd(e) {
-            if (!selectedDisk) return;
-
-            const targetTower = this;
-            const topDisk = targetTower.lastElementChild;
-            const isLegal = !topDisk || parseInt(selectedDisk.dataset.size) < parseInt(topDisk.dataset.size);
-
-            if (isLegal) {
-                targetTower.appendChild(selectedDisk);
-                moveCount++;
-                document.getElementById('move-counter').textContent = `Moves: ${moveCount}`;
-                checkWin();
-            }
-
-            // Reset disk position and styles
-            selectedDisk.style.position = 'static';
-            selectedDisk.style.opacity = '1';
-            selectedDisk.style.transition = 'all 0.3s ease';
-            selectedDisk = null;
-        }
-
-        // Check if the player won
         function checkWin() {
-            if (document.getElementById('tower-3').childElementCount === totalDisks) {
-                alert(`Congratulations! You solved it in ${moveCount} moves!`);
+            if(document.getElementById('tower-3').children.length === totalDisks) {
+                alert(`You won in ${moveCount} moves!`);
                 resetGame();
             }
         }
 
-        // Reset the game
         function resetGame() {
             moveCount = 0;
             document.getElementById('move-counter').textContent = 'Moves: 0';
             initializeGame();
         }
 
-        // Start the game
+        // Initialize game
         initializeGame();
     </script>
 </body>
