@@ -130,7 +130,18 @@
         let moveCount = 0;
         const totalDisks = 3;
 
-        function initializeGame() {
+        function requestPassword() {
+    const password = prompt("Enter the password to play:");
+    if (password !== "57") {
+        alert("Incorrect password! Reload the page to try again.");
+        return false;
+    }
+    return true;
+}
+
+function initializeGame() {
+    if (!requestPassword()) return; // Stop the game if the password is wrong
+
     const tower1 = document.getElementById('tower-1');
     tower1.innerHTML = ''; // Clear tower before adding new disks
 
@@ -228,16 +239,16 @@ function addEventListeners() {
 
         function checkWin() {
             if(document.getElementById('tower-3').children.length === totalDisks) {
-                alert(`You won in ${moveCount} moves Your code is 0000.` );
+                alert(`You won in ${moveCount} moves Your first code is 0000.`);
                 resetGame();
             }
         }
 
         function resetGame() {
-            moveCount = 0;
-            document.getElementById('move-counter').textContent = 'Moves: 0';
-            initializeGame();
-        }
+    moveCount = 0;
+    document.getElementById('move-counter').textContent = 'Moves: 0';
+    initializeGame(); // Password will be asked again
+}
 
         // Initialize game
         initializeGame();
